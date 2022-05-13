@@ -1,6 +1,6 @@
--- 4/25 수업
+-------  4/25 수업
 
--- 일반 함수
+-- [일반 함수]
 select ename, sal, comm, sal+comm, sal+NVL(comm,0)
 from emp
 where deptno = 30;
@@ -56,7 +56,6 @@ select ename, sal,
 from emp;
 -- SIGN(sal-1000)에서 sal-1000한 값이 0보다 크면 1, 0보다 작으면 -1, 0이면 0을 출력
 
-
 -- CASE 함수
 select ename, sal, 
        CASE job WHEN 'ANALYST' THEN sal*1.1
@@ -67,3 +66,90 @@ select ename, sal,
                 ELSE sal
        END salary
 from emp;
+
+
+------- 5/13일 수업
+
+-- [그룹 함수] 89p
+select MIN(ename), MAX(ename), MIN(hiredate), MAX(hiredate)
+from emp; -- 문자와 날짜 데이터도 최소/최대값을 구할 수 있다
+
+select ename, hiredate
+from emp
+order by hiredate;
+
+select AVG(sal), MAX(sal), MIN(sal), SUM(sal)
+from emp
+where job = 'SALESMAN';
+
+select COUNT(*) c1, COUNT(comm) c2, AVG(comm) c3, AVG(NVL(comm, 0)) c4 -- NVL은 comm이 null이면 0으로 바꾸어줌
+from emp;
+-- COUNT(*)은 emp 테이블의 행의 갯수, count(comm)은 comm값이 null이 아닌 데이터 갯수, 
+-- AVG(comm)은 null이 아닌 comm값의 평균, AVG(NVL(comm, 0))은 comm값이 null이면 0으로 변환 뒤 평균
+
+select COUNT(deptno) c_dept, COUNT(DISTINCT deptno) c_dis, COUNT(DISTINCT job) c_job
+from emp;
+-- DISTINCT은 중복 제거
+
+select AVG(comm), SUM(comm)/14
+from emp;
+
+select AVG(NVL(comm, 0)), SUM(comm)/14
+from emp;
+
+select COUNT(deptno), COUNT(DISTINCT deptno), 
+       SUM(deptno), SUM(DISTINCT deptno)
+from emp;
+
+
+-- [GROUP BY절] 95p
+select deptno, count(*), trunc(avg(sal),1), min(sal), max(sal), sum(sal)
+from emp
+GROUP BY deptno
+order by deptno;
+-- deptno값을 그룹으로 설정하여 그룹별로 갯수, 평균, 최소, 최대, 합을 출력
+-- count(*)은 쿼리 문장의 속도를 저하시키는 원인이 된다..
+
+select deptno, count(*), trunc(avg(sal),1), min(sal), max(sal), sum(sal)
+from emp
+GROUP BY deptno
+order by sum(sal) desc;
+
+/*
+-- GROUP BY절에 사용하는 컬럼들은 SELECT절에 있어야 한다
+select job, count(*), trunc(avg(sal),1), min(sal), max(sal), sum(sal)
+from emp
+GROUP BY deptno
+order by sum(sal) desc;
+*/
+
+select job, count(*), trunc(avg(sal)), sum(sal)
+from emp
+GROUP BY job;
+-- job을 기준으로 그룹을 나눈다
+
+select job, deptno, count(*), avg(sal), sum(sal)
+from emp
+GROUP BY job, deptno;
+-- job, deptno를 기준으로 그룹을 나눈다 (manager의 10번, manager의 20번...)
+ 
+ 
+-- [HAVING절] 97p
+select deptno, count(*), sum(sal)
+from emp
+GROUP BY deptno
+HAVING count(*) > 4;
+-- 인원이 4명보다 많은 부서에 대하여 번호, 인원수, 급여의 합 출력
+ 
+select deptno, avg(sal), sum(sal)
+from emp
+GROUP BY deptno
+HAVING max(sal) > 2900;
+-- 급여가 최대 2900 이상인 부서에 대하여 번호, 평균 급여, 급여의 합 출력
+-- HAVING절에 쓰는 컬럼은 SELECT절에 없어도 된다
+
+select job, avg(sal), sum(sal)
+from emp
+GROUP BY job
+HAVING avg(sal) >= 3000;
+ 
