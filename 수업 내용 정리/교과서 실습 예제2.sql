@@ -152,4 +152,88 @@ select job, avg(sal), sum(sal)
 from emp
 GROUP BY job
 HAVING avg(sal) >= 3000;
- 
+
+
+-- 5/16일 수업
+
+select deptno, SUM(sal)
+from emp
+GROUP BY deptno 
+HAVING SUM(sal) > 10000
+AND deptno IN(20,30);
+
+select deptno, SUM(sal)
+from emp
+where job = 'CLERK'
+GROUP BY deptno
+HAVING AVG(sal) >= 1000;
+
+select deptno,  AVG(sal)
+from emp
+GROUP BY deptno
+HAVING AVG(sal) > 1000
+AND job = 'CLERK'; -- job은 그룹으로 설정한 컬럼이 아니기 때문에 having절에서 사용 시 오류 발생
+
+select MAX(SUM(sal)) -- 중첩 함수는 한번만 사용
+from emp
+GROUP BY deptno; -- 부서 번호별로 합계를 구한 후에 그 중에서 최대 값을 구한다
+
+select ename, hiredate, MIN(hiredate), deptno -- GROUP BY 설정 없이 일반 컬럼과 기술될 수 없다 < 오류 발생
+from emp
+where deptno = 20; 
+-- 일반 컬럼을 group by절에서 전부 그룹으로 설정하고 having절에서 조건을 기술해야 한다
+
+select MIN(hiredate) -- 정상적으로 실행된다
+from emp
+where deptno = 20; 
+
+select LISTAGG(ename, ';') -- 구분자를 ;으로
+       WITHIN GROUP (ORDER BY ename desc) "Ename",
+       LISTAGG(hiredate, ';')
+       WITHIN GROUP (ORDER BY ename desc) "hiredate",  -- ename을 기준으로 내림차순
+       MIN(hiredate) "Earliest"
+from emp
+where deptno = 20;
+-- LISTAGG는 list aggregation(목록 집계함수)
+
+select LISTAGG(ename, '$') -- 구분자를 ;으로
+       WITHIN GROUP (ORDER BY ename desc) "Ename",
+       LISTAGG(hiredate, ';')
+       WITHIN GROUP (ORDER BY hiredate) "hiredate", -- hiredate를 기준으로 오름차순
+       MIN(hiredate) "Earliest"
+from emp
+where deptno = 20;
+
+
+
+-- [ROLLUP] 101p
+
+-- 집합에서 통계 및 요약정보를 추출하는데 사용(많이 사용하지는 않는다)
+-- ROLLUP과 CUBE, GROUPING SETS는 속도저하를 일으키기 쉬움
+
+select deptno, count(*), sum(sal)
+from emp
+group by ROLLUP(deptno);
+
+select deptno, job, sum(sal)
+from emp
+group by ROLLUP(deptno, job);
+
+select deptno, job, sum(sal)
+from emp
+group by ROLLUP(job, deptno);
+
+select deptno, job, mgr,sum(sal)
+from emp
+group by ROLLUP(deptno, job, mgr);
+
+
+-- [CUBE] 104p
+select deptno, job, sum(sal)
+from emp
+group by CUBE(deptno, job);
+-- ROLLUP 함수와는 역방향 출력
+
+select deptno, job, sum(sal)
+from emp
+group by CUBE(job, deptno);
