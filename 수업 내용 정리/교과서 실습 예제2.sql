@@ -205,7 +205,6 @@ from emp
 where deptno = 20;
 
 
-
 -- [ROLLUP] 101p
 
 -- 집합에서 통계 및 요약정보를 추출하는데 사용(많이 사용하지는 않는다)
@@ -237,3 +236,76 @@ group by CUBE(deptno, job);
 select deptno, job, sum(sal)
 from emp
 group by CUBE(job, deptno);
+
+
+-- 5/20일 수업
+
+-- [GROUPING SETS]
+select deptno, job, sum(sal)
+from emp
+group by GROUPING SETS(deptno, job);
+
+select deptno, NULL job, sum(sal)
+from emp
+group by deptno
+UNION ALL
+select NULL deptno, job, sum(sal)
+from emp
+group by job;
+
+
+-- [JOIN]
+select * from emp; -- 14행
+select * from dept; -- 5행
+select * from locations; -- 4행
+select * from salgrade; -- 5행
+
+-- [카타시안 곱]
+select empno, ename, dname
+from emp, dept; -- 70행
+-- (emp테이블의 행) 14 * (dept테이블의 행)5 = 70
+
+select e.empno, e.ename, d.deptno, d.dname, d.loc_code -- 두 개의 테이블에 전부 존재하는 컬럼을 작성 시에는 테이블명을 적어주어야 한다
+from emp e, dept d -- 테이블 이름에 별칭을 사용할 수 있다
+order by empno; -- 모든 경우의 수를 전부 출력하기 때문에 데이터를 복제할 때 많이 사용한다
+
+
+-- 5/23일 수업
+
+-- [EQUI JOIN] 118p
+select e.empno, e.ename, e.deptno, d.deptno, d.dname
+from emp e, dept d
+where d.deptno = e.deptno
+order by d.deptno;
+
+select e.empno, e.ename, e.sal, e.job, e.deptno, d.dname, d.loc_code
+from emp e, dept d
+where d.deptno = e.deptno and e.job = 'SALESMAN';
+
+select e.empno, d.dname, e.deptno ed, d.deptno dd, d.loc_code dl, l.loc_code ll, e.sal, l.city
+from emp e, dept d, locations l
+where d.deptno = e.deptno and d.loc_code = l.loc_code;
+
+select e.ename, e.sal, e.job, e.hiredate, e.comm
+from emp e, dept d, locations l
+where d.deptno = e.deptno and d.loc_code = l.loc_code and e.sal > 1500 and l.city = 'DALLAS';
+
+-- [NON-EQUI JOIN] 121p (=이 아닌 것)
+select e.empno, e.ename, e.job, e.sal, s.grade, s.losal, s.hisal
+from salgrade s, emp e
+where e.sal >= s.losal and e.sal <= s.hisal;
+
+select e.empno, e.ename, e.job, e.sal, s.grade, s.losal, s.hisal
+from salgrade s, emp e
+where e.sal between s.losal and s.hisal; -- 위와 결과는 같다
+
+-- [OUTER JOIN] 122p 
+select e.empno, e.ename, e.job, e.deptno e_deptno, d.deptno e_deptno, d.dname
+from dept d, emp e
+where d.deptno = e.deptno(+); 
+-- d.deptno : 기준테이블(dept), e.dpetno(+) : emp테이블(데이터가 부족헌 쪽에 '+'를 붙인다)
+
+select d.deptno, d.dname, d.loc_code, l.loc_code, l.city
+from dept d, locations l
+where d.loc_code = l.loc_code(+); 
+-- dept : 기준테이블, locations : 데이터가 부족한 테이블('+' 사용)

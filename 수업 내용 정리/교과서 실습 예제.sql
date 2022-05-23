@@ -1,12 +1,12 @@
--- DROP TABLE EMP;
--- DROP TABLE DEPT;
--- DROP TABLE LOCATIONS;
--- DROP TABLE SALGRADE;
+DROP TABLE EMP;
+DROP TABLE DEPT;
+DROP TABLE LOCATIONS;
+DROP TABLE SALGRADE;
 
 CREATE TABLE DEPT(
     DEPTNO NUMBER(2) CONSTRAINT PK_DEPT PRIMARY KEY,
 	DNAME VARCHAR2(14) ,
-	LOC VARCHAR2(13) 
+	LOC_CODE VARCHAR2(2) 
 ); -- 여기서 ctrl + enter 누르면 실행!
 -- ;이 오라클 끝문장을 가르킨다
 
@@ -32,10 +32,11 @@ CREATE TABLE LOCATIONS (
 ) ;
 
 -- DEPT테이블에 데이터 삽입
-INSERT INTO DEPT VALUES(10,'ACCOUNTING','NEW YORK');
-INSERT INTO DEPT VALUES(20,'RESEARCH','DALLAS');
-INSERT INTO DEPT VALUES(30,'SALES','CHICAGO');
-INSERT INTO DEPT VALUES(40,'OPERATIONS','BOSTON');
+INSERT INTO DEPT VALUES(10,'ACCOUNTING','A1');
+INSERT INTO DEPT VALUES(20,'RESEARCH','B1');
+INSERT INTO DEPT VALUES(30,'SALES','C1');
+INSERT INTO DEPT VALUES(40,'OPERATIONS','A1');
+INSERT INTO DEPT VALUES(50,'INSA',NULL);
 
 -- EMP테이블에 데이터 삽입
 INSERT INTO EMP VALUES
@@ -74,11 +75,13 @@ INSERT INTO SALGRADE VALUES (3,1401,2000);
 INSERT INTO SALGRADE VALUES (4,2001,3000);
 INSERT INTO SALGRADE VALUES (5,3001,9999);
 
+-- LOCATIONS 테이블에 데이터 삽입
+INSERT INTO LOCATIONS VALUES ('A1','SEOUL');
+INSERT INTO LOCATIONS VALUES ('B1','DALLAS');
+INSERT INTO LOCATIONS VALUES ('C1','CHICAGO');
+INSERT INTO LOCATIONS VALUES ('D1','BOSTON');
 commit; -- 확정
-
-SELECT * FROM emp; -- 웬만하면 대문자로 적어주기
-
-
+ 
 --------------------------------------------------------------------------------
 -- 23p 산술 연산자 실습
 select ename, sal, sal+300 from emp;
@@ -454,77 +457,3 @@ select extract(day from sysdate) 일자, -- SYSDATE는 현재 날짜와 시간 반환
        extract(year from sysdate) 년도
 from dual;
 
-
--- 67p (4/8일 수업)
-select SYSTIMESTAMP A,
-       EXTRACT(HOUR from SYSTIMESTAMP) B, -- 현재 시간에서 9를 뺀 결과가 출력
-       TO_CHAR(SYSTIMESTAMP, 'HH24') C -- 'HH24'는 24시간제 중 시간을 출력
-FROM dual;
--- TIME ZONE : 경도 0도에 있는 그리니치 천문대를 기준으로 한 시각의 차이 (대한민국은 9를 더한다)
-
-select 
-    SYSTIMESTAMP,
-    TO_CHAR(SYSTIMESTAMP, 'HH24') ch, -- 현재 시간
-    EXTRACT(TIMEZONE_HOUR FROM SYSTIMESTAMP) etzh,  -- 대한민국의 타임존은 9 이다
-    EXTRACT(HOUR FROM SYSTIMESTAMP) eh, -- 현재 시간에서 9를 뺀 결과 
-    EXTRACT(HOUR FROM CAST(SYSTIMESTAMP AS TIMESTAMP)) ehc -- SYSTIMESTAMP를 TIMESTAMP로 형변환 해서 시간을 뽑아내면 현재 시간이 출력된다 
-from dual;
-
-select
-    systimestamp,
-    extract(hour from systimestamp) h1,
-    extract(hour from systimestamp) + extract(timezone_hour from systimestamp) h2
-from dual;
-
-select ename, hiredate, 
-       extract(year from hiredate) "year",
-       extract(day from hiredate) "day"
-from emp
-where deptno = 20;
-
--- 69P 날짜 함수
-SELECT ename, hiredate, sysdate, 
-       months_between(sysdate, hiredate) m_between, -- 현재 날짜에서 입사일자 사이의 개월 수
-       trunc(months_between(sysdate, hiredate),0) t_between -- 현재 날짜에서 입사일자 사이의 소수점 이하 버림
-from emp
-where deptno = 10
-ORDER BY 4 desc;
- 
--- 70p
-select ename, hiredate, add_months(hiredate, 5) a_months
-from emp
-where deptno in (10,30) -- 부서 번호가 10번 또는 30번인 사원
-order by hiredate desc; 
-
-select ename hiredate, 
-       next_dat(hiredate, 5) n_6, -- 입사일자 이후의 금요일에 해당하는 일자를 출력
-       next_day(hiredate, 7) n_7  -- 입사일자 이후의 토요일에 해당하는 일자를 출력
-from emp
-where deptno = 10
-order by hiredate desc;
-
-select empno, ename, hiredate, 
-       last_day(hiredate) l_last, -- 입사한 달의 마지막 날짜 출력
-       last_day(hiredate) - hiredate l_day -- 입사한 달의 근무일 수
-from emp
-order by last_day(hiredate) - hiredate desc;
-
--- 71p
-select to_char(sysdate, 'YY/MM/DD HH24:MI:SS') nomal, -- 오늘 날짜를 'YY/MM/DD HH24:MI:SS' 형식으로 변환
-       to_char(trunc(sysdate), 'YY/MM/DD HH24:MI:SS') trunc, -- 시간 부분을 0으로 초기화
-       to_char(round(sysdate), 'YY/MM/DD HH24:MI:SS') round -- 오늘 날짜의 시간 부분을 반올림(12시 이상이면 날(일)수 증가)
-from dual;
-
-select hiredate, 
-       ROUND(hiredate, 'MONTH'), 
-       -- 입사일자의 일자가 16일 이상이면 그 다음달 1일로 반올림 되고
-       ROUND(hiredate, 'YEAR')
-       -- 입사일자의 월이 7월 이상이면 그 다음 년도의 1월 1일 출력
-from emp
-where deptno = 20;
-
-select hiredate, 
-       TRUNC(hiredate, 'MONTH'), -- 월을 기준으로 일(날)을 1로 변경
-       TRUNC(hiredate, 'YEAR') -- 년도를 기준으로 월, 일을 1월 1일로 변경
-from emp
-where deptno = 20;
