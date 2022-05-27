@@ -309,3 +309,106 @@ select d.deptno, d.dname, d.loc_code, l.loc_code, l.city
 from dept d, locations l
 where d.loc_code = l.loc_code(+); 
 -- dept : 기준테이블, locations : 데이터가 부족한 테이블('+' 사용)
+
+
+-- 5/27일 수업
+select d.deptno, d.dname, d.loc_code, l.loc_code, l.city
+from dept d, locations l
+where d.loc_code(+) = l.loc_code; 
+
+select d.deptno, d.dname, d.loc_code, l.loc_code, l.city
+from dept d, locations l
+where d.loc_code(+) = l.loc_code(+); -- 오류 발생 (오라클에서는 FULL OUTER JOIN이 없다) 
+
+select e.ename, e.sal, e.deptno, d.deptno, d.dname
+from emp e, dept d
+where e.deptno(+) = d.deptno 
+      and e.sal > 2000; -- OUTER JOIN 후에 and의 조건을 체크하여 OUTER JOIN 효과를 보지 못함 (논리 오류)
+
+select e.ename, e.sal, e.deptno, d.deptno, d.dname
+from emp e, dept d
+where e.deptno(+) = d.deptno 
+      and e.sal(+) > 2000; -- OUTER JOIN 효과를 보기 위해 (+)기호 추가
+      
+-- [SELF JOIN] 126p
+select e.empno 사원번호, e.ename 사원이름, m.empno 관리자사번, m.ename 관리자이름
+from emp e, emp m
+where e.mgr = m.empno
+order by 1; -- 1번 컬럼으로 정렬
+
+select w.ename || ' 관리자는 ' || NVL(m.ename, '미정') as "관리자 정보" -- m.ename이 null값이면 '미정' 출력
+from emp w, emp m
+where w.mgr = m.empno(+)
+order by 1;
+
+-- [ANSI JOIN 파트 - from절에서 join을 명시]
+-- [CROSS JOIN] 129p (카타시안 곱과 같다)
+select e.ename, d.dname
+from emp e CROSS JOIN dept d;
+-- 14 * 5 =70행
+
+select * from emp; -- 14행
+select * from dept; -- 5행
+
+select e.ename, d.dname
+from emp e, dept d; -- 위의 코드와 동일하다
+
+-- [NATURAL JOIN] 130p (이름이 같은 모든 열을 기준으로 조인)
+select e.ename, deptno, d.dname -- 조인 조건으로 사용한 열은 테이블 명칭을 명시할 수 없다
+                                -- 공통 컬럼은 select절에 명시하지 않아도 상관 없다
+from emp e NATURAL JOIN dept d;
+
+select d.deptno, d.dname, loc_code, l.city
+from dept d NATURAL JOIN locations l
+where d.deptno in (10,30); -- 조건절을 추가할 수 있다
+
+select e.ename, e.sal, deptno, d.dname, loc_code, l.city
+from emp e NATURAL JOIN dept d NATURAL JOIN locations l -- emp와 dept테이블의 deptno, dept와 locations테이블의 loc_code
+order by 1;
+
+-- [USING JOIN] 132p
+select e.ename, deptno, d.dname
+from emp e JOIN dept d using (deptno) -- deptno라는 열을 가지고 조인하겠다 지정
+order by e.ename desc;
+
+select d.deptno, d.dname, loc_code, l.city
+from dept d JOIN locations l USING (loc_code) 
+where d.deptno in (10,30);
+
+select e.ename, d.dname, l.city
+from emp e JOIN dept d USING (deptno) JOIN locations l USING (loc_code);
+
+-- [ON JOIN] 134p
+select e.ename 사원명, e.sal 사원급여, m.ename 매니저명, m.sal 매니저급여
+from emp e JOIN emp m ON (e.mgr = m.empno); -- self join이다
+
+select e.ename, e.sal, s.grade
+from emp e JOIN salgrade s ON (e.sal between s.losal and s.hisal)
+order by e.sal desc;
+
+select e.ename, d.dname, l.city
+from emp e JOIN dept d ON (e.deptno = d.deptno) JOIN locations l ON (d.loc_code = l.loc_code)
+where e.ename NOT LIKE '%A%';
+
+-- [OUTER JOIN] 136p
+select d.dname, d.loc_code, l.loc_code, l.city
+from dept d LEFT OUTER JOIN locations l ON (d.loc_code = l.loc_code);
+
+    -- 위 문장과 동일 (oracle 코드)
+    select d.dname, d.loc_code, l.loc_code, l.city
+    from dept d, locations l
+    where d.loc_code = l.loc_code(+); 
+
+select d.dname, d.loc_code, l.loc_code, l.city
+from dept d RIGHT OUTER JOIN locations l ON (d.loc_code = l.loc_code);
+
+    -- 위 문장과 동일 (oracle 코드)
+    select d.dname, d.loc_code, l.loc_code, l.city
+    from dept d, locations l
+    where d.loc_code(+) = l.loc_code; 
+
+select d.dname, d.loc_code, l.loc_code, l.city
+from dept d FULL OUTER JOIN locations l ON (d.loc_code = l.loc_code);
+
+select e.ename, e.sal, e.deptno, d.deptno, d.dname
+from emp e RIGHT OUTER JOIN dept d ON e.deptno = d.deptno AND e.sal >= 2000;
