@@ -412,3 +412,147 @@ from dept d FULL OUTER JOIN locations l ON (d.loc_code = l.loc_code);
 
 select e.ename, e.sal, e.deptno, d.deptno, d.dname
 from emp e RIGHT OUTER JOIN dept d ON e.deptno = d.deptno AND e.sal >= 2000;
+
+
+-- 5/30일 수업
+-- [서브쿼리(sql문 안 sql문)] 153p
+select ename, sal
+from emp
+where sal > (select sal -- 이 문장을 먼저 실행하고 결과 값을 
+             from emp
+             where empno = 7566);
+             
+select empno, ename, job, hiredate, sal
+from emp
+where job = (select job 
+             from emp
+             where empno = 7521)
+      and sal > (select sal from emp
+                 where empno = 7934);      
+                 
+select ename, deptno, sal, hiredate
+from emp
+where sal = max; 
+-- 오류 발생 (max는 그룹함수이기 때문에 where절에 사용 불가)
+-- 그룹 함수는 group by having절에 사용!
+                 
+select ename, deptno, sal, hiredate
+from emp
+where sal = (select max(sal) from emp); -- 혹은 이렇게 사용
+
+select empno, ename, job, sal, deptno
+from emp
+where sal < (select avg(sal) from emp);
+
+select deptno, min(sal) -- 부서번호와 부서의 최소값을 출력
+from emp
+group by deptno -- deptno를 기준으로 그룹 설정
+having min(sal) > (select min(sal) from emp -- 20번 부서의 최소 급여를 출력하는 문장
+                   where deptno = 20);
+-- 20번 부서의 최소값 보다는 큰 부서의 최소값들을 출력
+
+
+-- 6/3일 수업
+
+-- [다중 행 서브쿼리] 129p
+select empno, ename, sal, deptno
+from emp
+where sal = (select max(sal)
+             from emp
+             group by deptno); 
+-- 오류 발생(sal 값은 1개만 받을 수 있기 때문에)
+
+select empno, ename, sal, deptno
+from emp
+where sal IN (select max(sal)
+             from emp
+             group by deptno); 
+-- IN으로 변경하면 가능!
+-- sal값은 부서별 최대값과 비교하여 1개라고 만족하면 true 발생
+
+select ename, sal, job
+from emp
+where job != 'SALESMAN'
+      and sal > ANY(select sal from emp
+                    where job = 'SALESMAN');
+-- sal > ANY의 의미는 서브쿼리의 결과 값 중에서 제일 작은 값보다 크면 true 발생
+-- 즉, > ANY의 의미는 최소 값보다 크다면
+
+select ename, sal, job
+from emp
+where job != 'SALESMAN'
+      and sal > (select min(sal) from emp
+                 where job = 'SALESMAN');
+-- 위의 문장과 같은 결과이다
+
+select ename, sal, job
+from emp
+where job != 'SALESMAN'
+      and sal < ANY (select sal from emp
+                 where job = 'SALESMAN');
+-- sal < ANY의 의미는 서브쿼리의 결과 값 중에서 제일 작은 값보다 크면 true 발생
+-- 즉, < ANY의 의미는 최대 값보다 작으면
+
+select ename, sal, job
+from emp
+where job != 'SALESMAN'
+      and sal < ANY (select max(sal) from emp
+                 where job = 'SALESMAN');
+-- 위의 문장과 같은 결과이다
+
+select ename, sal, job, hiredate, deptno
+from emp
+where job != 'SALESMAN'
+      and sal > ALL (select sal from emp
+                     where job = 'SALESMAN');
+-- 서브쿼리의 sal값들 보다 큰 값을 출력
+                     
+select ename, sal, job, hiredate, deptno
+from emp
+where job != 'SALESMAN'
+      and sal > (select max(sal) from emp
+                 where job = 'SALESMAN');
+-- 위의 결과와 같다
+-- ANY를 사용하는 이유는 속도가 빠르기 때문!
+
+-- [다중 열 서브쿼리] 162p
+select ename, mgr, deptno
+from emp
+where mgr IN (select mgr from emp where ename IN('FORD', 'BLAKE'))
+      and deptno IN (select deptno from emp where ename IN('FORD', 'BLAKE'))
+      and ename NOT IN ('FORD', 'BLAKE');
+
+select ename, mgr, deptno
+from emp
+where mgr IN (7566, 7839)
+      and deptno IN (30,20)
+      and ename NOT IN ('FORD', 'BLAKE');
+-- 위의 문장과 같은 결과
+
+select ename, mgr, deptno
+from emp 
+where (mgr, deptno) IN (select mgr, deptno
+                        from emp
+                        where ename IN ('FORD', 'BLAKE'))
+      and ename not in ('FORD', 'BLAKE');
+-- 'FORD'값에서 mgr : 7566, deptno : 20인 다른 사원들을 출력
+-- 'BLAKE'값에서 mgr : 7839, deptno : 30인 다른 사원들을 출력
+
+-- [상호 연관 서브쿼리] 164p
+-- 메인 쿼리에서 값을 서브 쿼리에 넘겨주고, 서브 쿼리를 수행한 다음 그 결과를 다시 메인 쿼리로 반환해서 수행하는 쿼리
+select ename, sal, deptno, hiredate, job
+from emp e
+where sal > (select avg(sal)
+             from emp
+             where deptno = e.deptno);
+-- 1) 메인 쿼리에서 emp 테이블의 한 행을 읽어서 e.deptno값을 서브 쿼리로 전달
+-- 2) 서브 쿼리는 메인 쿼리에서 받은 부서번호로 평균 급여를 계산
+-- 3) 다시 메인 쿼리는 서브 쿼리의 평균 급여보다 급여가 큰 직원을 출력
+-- 4) 1)2)3) 과정을 14번(emp테이블 행 갯수) 반복하게 된다
+
+-- [FROM절 서브쿼리(인라인 뷰)] 166p
+select e.empno, e.ename, e.deptno, d.dname, d.loc_code
+from (select * from emp where deptno = 10) e, -- 부서번호가 10번인 사원들이 모인 가상 테이블의 이름 e
+     (select * from dept) d
+where e.deptno = d.deptno; 
+-- 상호 연관 서브쿼리로 변경 가능한 경우에도 inline view가 성능이 더 좋다
