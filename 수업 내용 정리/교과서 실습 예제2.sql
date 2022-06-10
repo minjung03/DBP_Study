@@ -556,3 +556,66 @@ from (select * from emp where deptno = 10) e, -- 부서번호가 10번인 사원들이 모인
      (select * from dept) d
 where e.deptno = d.deptno; 
 -- 상호 연관 서브쿼리로 변경 가능한 경우에도 inline view가 성능이 더 좋다
+
+
+
+-- 6/10일 수업
+-- [TOP-N 서브쿼리]
+select rownum, empno, ename, sal
+from emp
+order by sal desc; -- 맨 마지막으로 실행하게 되니 뒤죽 박죽이 된다
+-- from절의 emp테이블의 내용을 한 행씩 읽어서 rownum값 1부터 시작하여 1씩 증가된 값을 부여
+
+select rownum, empno, ename, sal
+from emp
+where rownum = 2;
+
+select rownum, empno, ename, sal
+from (select empno, ename, sal
+      from emp
+      order by sal desc);
+      
+-- [스칼라 서브쿼리]
+select empno, ename,
+       (case when deptno = (select deptno from dept 
+                            where loc_code='B1') 
+                            then 'top' else 'BRENCH' end) as location
+from emp;
+-- select절의 서브쿼리는 emp테이블의 부서번호와 dept테이블의 loc_code가 'B1'인 부서번호가 같을 경우
+-- 'TOP' 출력, 다른 경우 'BRENCH' 출력
+
+select ename, deptno, sal,
+       (select round(avg(sal)) from emp where deptno=e.deptno) as asal
+from emp e;
+
+select empno, ename, deptno, hiredate
+from emp e
+order by (select dname from dept where deptno = e.deptno) desc;
+
+
+-- [EXISTS 연산자]
+select deptno, dname
+from dept d
+where EXISTS(select 'A' -- a는 별의미 없음
+             from emp
+             where deptno = d.deptno);
+-- dept 테이블의 한 행을 읽고, EXISTS절의 서브쿼리에서 dept 테이블의 deptno와 emp 테이블의 deptno값을 비교하는데,
+-- 값이 같을 경우에는 emp테이블의 나머지 값을 읽지 않는다
+
+select deptno, dname
+from dept d
+where NOT EXISTS(select 'A' -- a는 별의미 없음
+             from emp
+             where deptno = d.deptno);
+
+-- [WITH 구문]
+select deptno, sum(sal)
+from emp
+group by deptno
+having sum(sal) > (select avg(sum(sal)) from emp group by deptno);
+
+WITH ABC AS (select deptno, sum(sal) as sum from emp group by deptno)
+
+select * 
+from ABC
+where sum > (select AVG(sum) from ABC);
